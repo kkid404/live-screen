@@ -3,26 +3,19 @@ import ctypes
 import datetime
 from pycoingecko import CoinGeckoAPI
 import re
-import requests
 import os
 import time
+from yaweather import Russia, YaWeather
+import configparser
 
+config = configparser.ConfigParser()
+config.read("settings.ini")
+API = config["YANDEX"]["API"]
 
 while True:
-    #Получаем погоду
-    appid = "814586ed88d8a823b94abc0979b955fd"
-    city_id= 1508291
-
-    try:
-        res = requests.get("http://api.openweathermap.org/data/2.5/weather",
-                    params={'id': city_id, 'units': 'metric', 'lang': 'ru', 'APPID': appid})
-        data = res.json()
-        conditions =  data['weather'][0]['description'].capitalize() 
-        temp =  int(data['main']['temp'])
-
-    except Exception as e:
-        print("Exception (weather):", e)
-        pass
+    #получаем погоду
+    y = YaWeather(api_key=API)
+    res = y.forecast(Russia.Chelyabinsk)
 
     #получем текущий курс интересующих монет на coingecko
     cg = CoinGeckoAPI()
@@ -78,8 +71,7 @@ while True:
 
     idraw = ImageDraw.Draw(holst)
     idraw.text((centerw / 3, centerh / 2.8), numtoweekday(numday) + " " + str(day) + "."  + str(month), font=fontweek, fill="#A771FE")
-    idraw.text((centerw / 3, centerh / 2.25), "Погода в Челябинске:", font=fontweather, fill="#A771FE")
-    idraw.text((centerw / 3, centerh / 2.03), conditions + " " + str(temp), font=fontweather, fill="#A771FE")
+    idraw.text((centerw / 3, centerh / 2.05), f'Фактическая погода {res.fact.feels_like} °C', font=fontweather, fill="#A771FE")
     idraw.text((centerw / 1.63, centerh / 2.2), str(hour) + ":" + str(minute), font=fontweek, fill="#A771FE")
     idraw.rectangle((centerw / 3, centerh / 1.87, centerw / 1.3, centerh / 1.86), fill='#A771FE')
     idraw.text((centerw / 3, centerh / 1.8), "BTC/USD: "+ str(btcprice), font=fontprice, fill="#e7f20c")
@@ -94,4 +86,4 @@ while True:
     wallpaper = bytes(full_path, 'utf-8')
     ctypes.windll.user32.SystemParametersInfoA(20, 0, wallpaper, 3)
 
-    time.sleep(60)
+    time.sleep(30)
